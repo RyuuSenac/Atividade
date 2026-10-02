@@ -1,0 +1,1 @@
+export { VITE_API_URL, VITE_GOOGLE_CLIENT_ID } from "../config/config.js";
