@@ -10,10 +10,10 @@
     "mysql2": "^3.24.5"
   },
   "scripts": {
-    "dev": "nodemon server.js",
+    "dev": "node --watch server.js",
     "start": "node server.js"
   },
-  "devDependencies": {
-    "nodemon": "^3.1.14"
+  "allowScripts": {
+    "bcrypt@6.0.0": true
   }
 }

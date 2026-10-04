@@ -1,12 +1,10 @@
--- Active: 1787267786316@@127.0.0.1@3306@atividade
-    DROP DATABASE atividade;
+-- Active: 1782020827630@@127.0.0.1@3306@atividade
+    DROP DATABASE IF EXISTS atividade;
 
     CREATE DATABASE atividade;
 
     use atividade;
 
-    DROP TABLE endereco;
-    -- ---------------------------------------------------------
     CREATE TABLE usuarios(
         id INT AUTO_INCREMENT PRIMARY KEY,
         nome VARCHAR(100) NOT NULL,

@@ -1,23 +1,32 @@
 import axios from "axios";
 
 const viaCepApi = axios.create({
-    baseURL: "https://viacep.com.br/ws",
+    baseURL: "https://viacep.com.br/ws"
 });
 
 export async function buscarCep(cep) {
-  const cepLimpo = cep.replace(/\D/g, "")
+    const cepLimpo = String(cep).replace(/\D/g, "");
 
-  const resposta = await viaCepApi.get(`/${cepLimpo}/json/`)
+    if (cepLimpo.length !== 8) {
+        return null;
+    }
 
-  if (resposta.data.erro) {
-    throw new Error("CEP não encontrado")
-  }
+    try {
+        const resposta = await viaCepApi.get(`/${cepLimpo}/json/`);
+        const dados = resposta.data;
 
-  return {
-    cep: response.data.cep,
-    logradouro: response.data.logradouro,
-    bairro: response.data.bairro,
-    cidade: response.data.localidade,
-    uf: response.data.uf
-  }
+        if (dados.erro) {
+            return null;
+        }
+
+        return {
+            cep: dados.cep.replace(/\D/g, ""),
+            logradouro: dados.logradouro,
+            bairro: dados.bairro,
+            cidade: dados.localidade,
+            uf: dados.uf
+        };
+    } catch (erro) {
+        return null;
+    }
 }

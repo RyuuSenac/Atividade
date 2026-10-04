@@ -60,22 +60,23 @@ export const cadastroUsuarios = async (req, res) => {
         return res.status(400).json({ mensagem: "Preencha todos os campos" })
     }
  
-    // Pegamos UMA conexão do pool para fazer uma TRANSAÇÃO:
-    // ou salva o usuário E o endereço, ou não salva nada.
+    // Pegamos uma conexão do pool para salvar o usuário e o endereço juntos.
     const conexao = await connect.getConnection()
  
     try {
-        const [existente] = await connect.query("SELECT id FROM usuarios WHERE email = ?", [email])
+        await conexao.beginTransaction()
+
+        const [existente] = await conexao.query("SELECT id FROM usuarios WHERE email = ?", [email])
         if (existente.length > 0) {
+            await conexao.rollback()
+            conexao.release()
             return res.status(409).json({ mensagem: "O email informado ja foi cadastrado anteriormente" })
         }
  
         // criptografia de senha
         const senhaCriptografa = await bcrypt.hash(senha, 10)
  
-        await conexao.beginTransaction()
- 
-        const [resultado] = await connect.query(
+        const [resultado] = await conexao.query(
             'INSERT INTO usuarios (nome, email, senha, role) VALUES (?, ?,?,?)',
             [nome, email, senhaCriptografa, 'usuario']
         )
@@ -90,9 +91,12 @@ export const cadastroUsuarios = async (req, res) => {
         )
  
         await conexao.commit() // confirma as duas gravações de dados (usuario e endereço)
+        conexao.release()
  
         return res.status(201).json({ mensagem: "Usuário cadastrado com sucesso!" })
     } catch (erro) {
+        await conexao.rollback()
+        conexao.release()
         console.log(erro)
         return res.status(500).json({ mensagem: "Erro ao cadastrar  usuario." })
     }
@@ -120,13 +124,13 @@ export const login = async (req, res) => {
         
         
         if (!usuario.senha) {
-            return res.status(401).json({ mensagem: "Email ou senha inválidos" })
+            return res.status(401).json({ mensagem: "Esta conta foi criada com o Google. Use o botão 'Entrar com Google'" })
         }
 
         const senhaConfere = await bcrypt.compare(senha, usuario.senha)
         
         if (!senhaConfere) {
-            return res.status(401).json({ mensagem: "Esta conta foi criada com o Google. Use o botão 'Entrar com Google'" })
+            return res.status(401).json({ mensagem: "Email ou senha inválidos" })
         }
 
         const { token, payload } = gerarToken(usuario)
@@ -243,4 +247,44 @@ export const perfil = async (req, res) => {
             mensagem: "Erro ao buscar perfil."
         });
     };
+};
+
+export const salvarEndereco = async (req, res) => {
+    const usuarioId = req.usuarios.id;
+    const enderecoValido = await validarEndereco(req.body);
+
+    if (!enderecoValido) {
+        return res.status(400).json({ mensagem: "Preencha todos os campos do endereço" });
+    }
+
+    try {
+        await connect.query(
+            `INSERT INTO enderecos
+            (usuario_id, cep, logradouro, numero, complemento, bairro, cidade, uf)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+            cep = VALUES(cep),
+            logradouro = VALUES(logradouro),
+            numero = VALUES(numero),
+            complemento = VALUES(complemento),
+            bairro = VALUES(bairro),
+            cidade = VALUES(cidade),
+            uf = VALUES(uf)`,
+            [
+                usuarioId,
+                enderecoValido.cep,
+                enderecoValido.logradouro,
+                enderecoValido.numero,
+                enderecoValido.complemento,
+                enderecoValido.bairro,
+                enderecoValido.cidade,
+                enderecoValido.uf
+            ]
+        );
+
+        return res.status(200).json({ mensagem: "Endereço salvo com sucesso" });
+    } catch (erro) {
+        console.log(erro);
+        return res.status(500).json({ mensagem: "Erro ao salvar endereço" });
+    }
 };

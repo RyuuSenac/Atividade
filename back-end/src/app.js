@@ -21,7 +21,7 @@ app.get("/", (req, res) => {
 });
 
 // Rotas de usuários:
-app.use("/", usuarios);
+app.use("/usuarios", usuarios);
 
 // Rota não encontrada.
 app.use((req, res) => {

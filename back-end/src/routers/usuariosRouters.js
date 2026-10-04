@@ -4,7 +4,8 @@ import {
     cadastroUsuarios,
     login,
     loginGoogle,
-    perfil
+    perfil,
+    salvarEndereco
 } from "../controllers/usuarioControllers.js";
 
 import autenticar from "../middleware/autenticar.js";
@@ -16,5 +17,6 @@ router.post("/login", login);
 router.post("/login/google", loginGoogle);
 
 router.get("/perfil", autenticar, perfil);
+router.put("/endereco", autenticar, salvarEndereco);
 
 export default router;
