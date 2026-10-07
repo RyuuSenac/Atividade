@@ -1,4 +1,3 @@
--- Active: 1782020827630@@127.0.0.1@3306@atividade
     DROP DATABASE IF EXISTS atividade;
 
     CREATE DATABASE atividade;
